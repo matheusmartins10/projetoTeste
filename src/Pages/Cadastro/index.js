@@ -1,16 +1,28 @@
 import React, {useState, useEffect} from 'react'
 
+import { useHistory } from 'react-router-dom'
+
 import api from '../../Services/api'
 
 import {Container} from './styles'
+
+import Prontuario from '../Prontuario/index'
+import ErrorSystem from '../../Components/Error/index'
+
 
 const Cadastro = () => {
     const [queixa, setQueixa] = useState([])
     const [doenca, setDoenca] = useState([])
 
-    const [selectQueixa, setSelectQueixa] = useState('')
-    const [selectDoenca, setSelectDoenca] = useState('')
-    const [molestia, setMolestia] = useState('')
+    const [selectQueixa, setSelectQueixa] = useState(0)
+    const [selectDoenca, setSelectDoenca] = useState([])
+    const [historico, setHistorico] = useState('')
+
+    const [dados, setDados] = useState({})
+
+    const [error, setError] = useState(false)
+
+    const history = useHistory()
 
 
     useEffect(() => {
@@ -35,17 +47,37 @@ const Cadastro = () => {
     }, [])
 
 
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+        
+
+        const data = {
+            queixa: selectQueixa,
+            doenca: selectDoenca,
+            historico: historico    
+        }
+
+        try {
+          const response =  await api.post('/prontuario', data)
+          setDados(response.data)
+
+         history.push('/prontuario')
+        }
+        catch(err){
+          setError(true)
+        }
+    }
 
 
     return (
         <Container>
-            <form>
+            <form onSubmit={handleSubmit}>
                 <div className="field">
                 <label htmlFor="queixa">Queixa Principal</label>
-                <select onChange={(e) => setSelectQueixa(e.target.value)} name="queixa" >
-                    <option value="0">Seleciona uma queixa</option>
+                <select onChange={(e) => setSelectQueixa(e.target.value)} name="queixa" required>
+                    <option value={0}>Seleciona uma queixa</option>
                     {queixa.map(q => (
-                        <option key={q.id} value={q.label} >
+                        <option key={q.id} value={q.id}>
                              {q.label}
                         </option>
                     ))}
@@ -54,10 +86,10 @@ const Cadastro = () => {
 
                 <div className="field">
                 <label htmlFor="queixa">Doenças Adulto</label>
-                <select   onChange={(e) => setSelectDoenca(e.target.value)} name="doenca" >
-                    <option value="0">Seleciona uma doença</option>
+                <select   onChange={(e) => setSelectDoenca(e.target.value)} name="doencas" >
+                    <option value={0}>Seleciona uma doença</option>
                     {doenca.map(d => (
-                        <option key={d.id} value={d.label} >
+                        <option key={d.id} value={d.id} >
                              {d.label}
                         </option>
                     ))}
@@ -70,15 +102,17 @@ const Cadastro = () => {
                 <label>Histórico da Moléstia</label>
                 <textarea 
                 rows={5}  
+                required
                 minLength={10}  
                 maxLength={1000} 
-                required 
-                onChange={(e) => setMolestia(e.target.value)}
+                value={historico}
+                onChange={(e) => setHistorico(e.target.value)}
                 />
                 </div>
 
                 <button type="submit" >Salvar</button>
             </form>
+            {error && <ErrorSystem error={error} />}
         </Container>
     )
 }
